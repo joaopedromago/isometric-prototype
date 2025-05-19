@@ -5,7 +5,7 @@ public class PlayerMovement : MonoBehaviour
 {
     private Collider2D col;
 
-    public float moveSpeed = 5f;
+    public float moveSpeed = 250f;
     public float tileSize = 1f; // set this to your tile size in Unity units
     private Vector3 moveDir;
     private Vector3 previousPos;
