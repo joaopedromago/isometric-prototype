@@ -38,7 +38,7 @@ public class PlayerTileDetector : MonoBehaviour
     }
 
 
-    Tilemap GetTilemapByPosition(int x, int y, int height)
+    List<Tilemap> GetTilemapByPosition(int x, int y, int height)
     {
         string heightName = $"Chunks_{height}";
         string tilemapName = $"Chunk_{x}_{y}";
@@ -50,11 +50,18 @@ public class PlayerTileDetector : MonoBehaviour
             {
                 if (tilemapTransform.name == tilemapName)
                 {
-                    Transform eventTile = tilemapTransform.Find("EventTile");
-                    if (eventTile != null)
+                    List<Tilemap> tilemaps = new List<Tilemap>();
+
+                    foreach (Transform child in tilemapTransform)
                     {
-                        return eventTile.GetComponent<Tilemap>();
+                        Tilemap tilemap = child.GetComponent<Tilemap>();
+                        if (tilemap != null)
+                        {
+                            tilemaps.Add(tilemap);
+                        }
                     }
+
+                    return tilemaps;
                 }
             }
         }
@@ -66,16 +73,21 @@ public class PlayerTileDetector : MonoBehaviour
     {
         Vector2Int playerChunkCoord = GetChunkCoord(transform.position);
 
-        var tilemap = GetTilemapByPosition(playerChunkCoord.x, playerChunkCoord.y, (int)transform.position.z);
+        var tilemaps = GetTilemapByPosition(playerChunkCoord.x, playerChunkCoord.y, (int)transform.position.z);
 
-        if (!tilemap) return;
+        if (tilemaps == null || tilemaps.Count == 0) return;
 
-        Vector3Int tilePos = tilemap.WorldToCell(transform.position);
-        TileBase currentTile = tilemap.GetTile(tilePos);
-
-        if (currentTile != null && stairUpTiles.Contains(currentTile))
+        foreach (var tilemap in tilemaps)
         {
-            PerformEnterStair();
+            if (!tilemap) continue;
+
+            Vector3Int tilePos = tilemap.WorldToCell(transform.position);
+            TileBase currentTile = tilemap.GetTile(tilePos);
+
+            if (currentTile != null && stairUpTiles.Contains(currentTile))
+            {
+                PerformEnterStair();
+            }
         }
     }
 

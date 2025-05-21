@@ -4,7 +4,7 @@ using System.Linq;
 
 public class ChunkLoader : MonoBehaviour
 {
-    public Transform player;
+    public Transform point;
     public int chunkSize = 32;
     public int viewDistance = 1; // 1 = 3x3 chunks
 
@@ -22,7 +22,7 @@ public class ChunkLoader : MonoBehaviour
 
     void Update()
     {
-        Vector2Int currentChunk = GetChunkCoord(player.position);
+        Vector2Int currentChunk = GetChunkCoord(point.position);
         UpdateChunks(currentChunk);
     }
 
