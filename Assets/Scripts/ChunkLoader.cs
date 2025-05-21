@@ -10,16 +10,14 @@ public class ChunkLoader : MonoBehaviour
 
     private Dictionary<Vector2Int, GameObject> loadedChunks = new Dictionary<Vector2Int, GameObject>();
     private Transform chunksRoot;
-    private Vector2Int previousChunk;
+    private Vector2Int? previousChunk = null;
     [SerializeField] private Vector2 worldOrigin = new Vector2(-9, -4);
-    private bool isStarted = false;
 
 
     void Start()
     {
         chunksRoot = GameObject.Find("Chunks").transform;
         CacheAllChunks();
-        isStarted = true;
     }
 
     void Update()
@@ -60,8 +58,6 @@ public class ChunkLoader : MonoBehaviour
 
     void UpdateChunks(Vector2Int center)
     {
-        if (!isStarted) return;
-
         var hasChange = previousChunk != center;
         if (!hasChange) return;
 

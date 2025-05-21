@@ -6,12 +6,14 @@ public class PlayerMovement : MonoBehaviour
     private Collider2D col;
 
     public float moveSpeed = 250f;
-    public float tileSize = 1f; // set this to your tile size in Unity units
+    public float tileSize = 1f;
     private Vector3 moveDir;
     private Vector3 previousPos;
     private Vector3 targetPos;
     private bool isMoving = false;
     private bool onCollision = false;
+
+    public bool IsMoving => isMoving;
 
 
     void Start()
