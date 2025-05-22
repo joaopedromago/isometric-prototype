@@ -14,9 +14,22 @@ public class PlayerAttributes : MonoBehaviour
     public bool IsMoving { get; set; } = false;
     public bool OnCollision { get; set; } = false;
 
-    public TileBase CurrentTile { get; set; }
     public List<Tilemap> CurrentTilemap { get; set; }
+    public Tilemap? CurrentGroundTilemap
+    {
+        get => CurrentTilemap?.Find(tilemap => tilemap != null && tilemap.name == "Ground");
+    }
 
+    public Vector3Int? CurrentTile
+    {
+        get => CurrentGroundTilemap?.WorldToCell(transform.position);
+    }
+    public Vector3? WorldPosition
+    {
+        get => CurrentTile != null
+            ? CurrentGroundTilemap?.GetCellCenterWorld(CurrentTile.Value)
+            : null;
+    }
 
     void Start()
     {
