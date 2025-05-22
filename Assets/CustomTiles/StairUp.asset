@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c4c6f2ed157f564e80663263cdd5703, type: 3}
   m_Name: StairUp
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 2505128802583380795, guid: 2cea86ad1af5cd24da48d91092f93a79, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

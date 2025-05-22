@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
@@ -90,17 +91,58 @@ public class PlayerTileDetector : MonoBehaviour
             {
                 if (customTile.isStair)
                 {
-                    PerformEnterStair();
+                    PerformEnterStair(customTile, tilemap);
                 }
             }
         }
     }
 
-    void PerformEnterStair()
+    public static Vector3 GetTileRotation(Tilemap tilemap, Vector3Int position)
     {
-        Vector3 pos = transform.position;
-        pos.y += 1.0f;
-        pos.z += 1.0f;
+        TileBase tile = tilemap.GetTile(position);
+        if (tile == null)
+        {
+            Debug.LogWarning("No tile at position.");
+            return Vector3.zero;
+        }
+
+        Matrix4x4 transformMatrix = tilemap.GetTransformMatrix(position);
+        Quaternion rotation = transformMatrix.rotation;
+        return rotation.eulerAngles;
+    }
+
+    public static Vector3 AdjustPositionByRotation(Vector3 position, Vector3 rotation)
+    {
+        if ((int)Math.Ceiling(rotation.z) == 0)
+        {
+            position.y += 1.0f;
+        }
+        else if ((int)Math.Ceiling(rotation.z) == 180)
+        {
+            position.y -= 1.0f;
+        }
+        else if ((int)Math.Ceiling(rotation.z) == 90)
+        {
+            Debug.Log("VAI PRA ESQUERDA PORA");
+            position.x -= 1.0f;
+        }
+        else if ((int)Math.Ceiling(rotation.z) == 270)
+        {
+            position.x += 1.0f;
+        }
+        Debug.Log((int)Math.Ceiling(rotation.z));
+
+        return position;
+    }
+
+    void PerformEnterStair(CustomTile tile, Tilemap tilemap)
+    {
+        Vector3Int tilePos = tilemap.WorldToCell(transform.position);
+        Vector3 rotation = GetTileRotation(tilemap, tilePos);
+        Debug.Log($"Rotation: {rotation}");
+        Vector3 pos = AdjustPositionByRotation(transform.position, rotation);
+        pos.z += 1; // TODO: ground level
+
         transform.position = pos;
     }
 }
