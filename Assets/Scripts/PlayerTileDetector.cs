@@ -77,14 +77,16 @@ public class PlayerTileDetector : MonoBehaviour
 
         if (tilemaps == null || tilemaps.Count == 0) return;
 
+        playerAttributes.CurrentTilemap = tilemaps;
+
         foreach (var tilemap in tilemaps)
         {
             if (!tilemap) continue;
 
             Vector3Int tilePos = tilemap.WorldToCell(transform.position);
-            TileBase currentTile = tilemap.GetTile(tilePos);
+            playerAttributes.CurrentTile = tilemap.GetTile(tilePos);
 
-            if (currentTile != null && stairUpTiles.Contains(currentTile))
+            if (playerAttributes.CurrentTile != null && stairUpTiles.Contains(playerAttributes.CurrentTile))
             {
                 PerformEnterStair();
             }

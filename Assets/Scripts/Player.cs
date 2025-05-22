@@ -1,5 +1,6 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerAttributes : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class PlayerAttributes : MonoBehaviour
 
     public bool IsMoving { get; set; } = false;
     public bool OnCollision { get; set; } = false;
+
+    public TileBase CurrentTile { get; set; }
+    public List<Tilemap> CurrentTilemap { get; set; }
 
 
     void Start()
