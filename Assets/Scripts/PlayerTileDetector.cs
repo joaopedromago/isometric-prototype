@@ -14,15 +14,15 @@ public class PlayerTileDetector : MonoBehaviour
 
     private Vector3? previousPosition = null;
 
-    private PlayerMovement playerMovement;
+    private PlayerAttributes playerAttributes;
 
     void Awake()
     {
-        playerMovement = GetComponent<PlayerMovement>();
+        playerAttributes = GetComponent<PlayerAttributes>();
     }
     void Update()
     {
-        if (playerMovement.IsMoving) return;
+        if (playerAttributes.IsMoving) return;
         if (previousPosition == transform.position) return;
         previousPosition = transform.position;
 
