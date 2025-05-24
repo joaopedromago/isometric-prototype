@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -37,9 +38,10 @@ public class PlayerMovement : MonoBehaviour
                 if (attempt == Vector3.zero) continue;
 
                 Vector3 desiredPos = transform.position + attempt * tileSize;
-                bool hasCollisionAtTarget = Physics2D.OverlapCircle(desiredPos, 0.1f) != null;
+                Collider2D[] targetColliders = Physics2D.OverlapCircleAll(desiredPos, 0.1f);
+                bool haveCollision = targetColliders.Any(c => c != null && ShouldCollide(c));
 
-                if (!hasCollisionAtTarget)
+                if (!haveCollision)
                 {
                     playerAttributes.MoveDir = attempt;
                     playerAttributes.PreviousPos = transform.position;
@@ -70,6 +72,36 @@ public class PlayerMovement : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
+        print("COLLIDED!");
         playerAttributes.OnCollision = true;
+    }
+
+    bool ShouldCollide(Collider2D targetCollider)
+    {
+        Transform parent = targetCollider?.transform?.parent?.parent;
+        if (parent == null)
+        {
+            return false;
+        }
+
+        return IsSameChunk(parent);
+    }
+
+    bool IsSameChunk(Transform chunk)
+    {
+        if (chunk != null)
+        {
+            string[] parts = chunk.name.Split('_');
+
+            if (parts.Length > 1 && int.TryParse(parts[1], out int number))
+            {
+                if (number != (int)transform.position.z)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

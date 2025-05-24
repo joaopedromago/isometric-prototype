@@ -93,6 +93,10 @@ public class PlayerTileDetector : MonoBehaviour
                 {
                     PerformEnterStair(customTile, tilemap);
                 }
+                if (customTile.isStairDown)
+                {
+                    PerformEnterStairDown(customTile, tilemap);
+                }
             }
         }
     }
@@ -102,7 +106,6 @@ public class PlayerTileDetector : MonoBehaviour
         TileBase tile = tilemap.GetTile(position);
         if (tile == null)
         {
-            Debug.LogWarning("No tile at position.");
             return Vector3.zero;
         }
 
@@ -123,14 +126,12 @@ public class PlayerTileDetector : MonoBehaviour
         }
         else if ((int)Math.Ceiling(rotation.z) == 90)
         {
-            Debug.Log("VAI PRA ESQUERDA PORA");
             position.x -= 1.0f;
         }
         else if ((int)Math.Ceiling(rotation.z) == 270)
         {
             position.x += 1.0f;
         }
-        Debug.Log((int)Math.Ceiling(rotation.z));
 
         return position;
     }
@@ -139,9 +140,22 @@ public class PlayerTileDetector : MonoBehaviour
     {
         Vector3Int tilePos = tilemap.WorldToCell(transform.position);
         Vector3 rotation = GetTileRotation(tilemap, tilePos);
-        Debug.Log($"Rotation: {rotation}");
+
         Vector3 pos = AdjustPositionByRotation(transform.position, rotation);
-        pos.z += 1; // TODO: ground level
+        pos.z += 1;
+        GetComponent<SpriteRenderer>().sortingOrder += 10;
+
+        transform.position = pos;
+    }
+
+    void PerformEnterStairDown(CustomTile tile, Tilemap tilemap)
+    {
+        Vector3Int tilePos = tilemap.WorldToCell(transform.position);
+        Vector3 rotation = GetTileRotation(tilemap, tilePos);
+
+        Vector3 pos = AdjustPositionByRotation(transform.position, rotation);
+        pos.z -= 1;
+        GetComponent<SpriteRenderer>().sortingOrder -= 10;
 
         transform.position = pos;
     }

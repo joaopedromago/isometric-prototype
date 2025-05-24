@@ -13,10 +13,6 @@ public class DayNightCycle2D : MonoBehaviour
     void Start()
     {
         globalLight = GetComponent<Light2D>();
-        if (globalLight == null)
-        {
-            Debug.LogError("Light2D component not found!");
-        }
     }
 
     void Update()

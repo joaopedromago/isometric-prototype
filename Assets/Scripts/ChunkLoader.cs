@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Tilemaps;
 
 public class ChunkLoader : MonoBehaviour
 {
@@ -8,9 +9,9 @@ public class ChunkLoader : MonoBehaviour
     public int chunkSize = 32;
     public int viewDistance = 1; // 1 = 3x3 chunks
 
-    private Dictionary<Vector2Int, GameObject> loadedChunks = new Dictionary<Vector2Int, GameObject>();
+    private Dictionary<Vector3Int, GameObject> loadedChunks = new Dictionary<Vector3Int, GameObject>();
     private Transform chunksRoot;
-    private Vector2Int? previousChunk = null;
+    private Vector3Int? previousPosition = null;
     [SerializeField] private Vector2 worldOrigin = new Vector2(-9, -4);
 
 
@@ -22,7 +23,7 @@ public class ChunkLoader : MonoBehaviour
 
     void Update()
     {
-        Vector2Int currentChunk = GetChunkCoord(point.position);
+        Vector3Int currentChunk = GetChunkCoord(point.position);
         UpdateChunks(currentChunk);
     }
 
@@ -32,46 +33,53 @@ public class ChunkLoader : MonoBehaviour
         {
             if (child.name.StartsWith("Chunk_"))
             {
-                Vector2Int coord = ParseChunkName(child.name);
+                Vector3Int coord = ParseChunkName(child.name, child.transform.parent.name);
                 loadedChunks[coord] = child.gameObject;
             }
         }
     }
 
-    Vector2Int ParseChunkName(string name)
+    Vector3Int ParseChunkName(string name, string parentName)
     {
         // Ex: "Chunk_0_1"
         string[] parts = name.Split('_');
         int x = int.Parse(parts[1]);
         int y = int.Parse(parts[2]);
-        return new Vector2Int(x, y);
+        int z = int.Parse(parentName.Split('_')[1]);
+        return new Vector3Int(x, y, z);
     }
 
-    Vector2Int GetChunkCoord(Vector3 worldPos)
+    Vector3Int GetChunkCoord(Vector3 worldPos)
     {
         Vector2 adjusted = new Vector2(worldPos.x - worldOrigin.x, worldPos.y - worldOrigin.y);
         int x = Mathf.FloorToInt(adjusted.x / chunkSize);
         int y = Mathf.FloorToInt(adjusted.y / chunkSize);
-        return new Vector2Int(x, y);
+        return new Vector3Int(x, y, (int)worldPos.z);
     }
 
 
-    void UpdateChunks(Vector2Int center)
+    void UpdateChunks(Vector3Int position)
     {
-        var hasChange = previousChunk != center;
+        var hasChange = previousPosition != position;
         if (!hasChange) return;
+        print("UPDATE CHUNKS!" + position);
 
-        HashSet<Vector2Int> chunksToKeep = new HashSet<Vector2Int>();
+        int height = (int)point.transform.position.z;
+
+        HashSet<Vector3Int> chunksToKeep = new HashSet<Vector3Int>();
 
         for (int dx = -viewDistance; dx <= viewDistance; dx++)
         {
             for (int dy = -viewDistance; dy <= viewDistance; dy++)
             {
-                Vector2Int pos = new Vector2Int(center.y + dy, center.x + dx);
-                if (loadedChunks.TryGetValue(pos, out GameObject chunk))
+                foreach (Transform child in chunksRoot.transform)
                 {
-                    chunk.SetActive(true);
-                    chunksToKeep.Add(pos);
+                    Vector3Int pos = new Vector3Int(position.y + dy, position.x + dx, int.Parse(child.name.Split('_')[1]));
+                    if (loadedChunks.TryGetValue(pos, out GameObject chunk))
+                    {
+                        chunk.SetActive(true);
+                        chunksToKeep.Add(pos);
+                    }
                 }
             }
         }
@@ -82,12 +90,33 @@ public class ChunkLoader : MonoBehaviour
             {
                 pair.Value.SetActive(false);
             }
+
+            if (pair.Value.transform?.parent?.name == "Chunks_" + height)
+            {
+                UpdateCollider(pair.Value, false);
+            }
+            else
+            {
+                UpdateCollider(pair.Value, true);
+            }
         }
 
-        if (center != previousChunk)
+        if (position != previousPosition)
         {
-            previousChunk = center;
+            previousPosition = position;
         }
     }
 
+    void UpdateCollider(GameObject chunk, bool value)
+    {
+        foreach (Transform child in chunk.transform)
+        {
+            Collider2D collider = child.GetComponent<Collider2D>();
+
+            if (collider != null)
+            {
+                Physics2D.IgnoreCollision(collider, point.GetComponent<Collider2D>(), value);
+            }
+        }
+    }
 }
