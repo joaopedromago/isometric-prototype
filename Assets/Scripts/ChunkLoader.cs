@@ -62,7 +62,6 @@ public class ChunkLoader : MonoBehaviour
     {
         var hasChange = previousPosition != position;
         if (!hasChange) return;
-        print("UPDATE CHUNKS!" + position);
 
         int height = (int)point.transform.position.z;
 
@@ -79,6 +78,15 @@ public class ChunkLoader : MonoBehaviour
                     {
                         chunk.SetActive(true);
                         chunksToKeep.Add(pos);
+
+                        if (chunk.transform?.parent?.name == "Chunks_" + height)
+                        {
+                            UpdateCollider(chunk, false);
+                        }
+                        else
+                        {
+                            UpdateCollider(chunk, true);
+                        }
                     }
                 }
             }
@@ -89,15 +97,6 @@ public class ChunkLoader : MonoBehaviour
             if (!chunksToKeep.Contains(pair.Key))
             {
                 pair.Value.SetActive(false);
-            }
-
-            if (pair.Value.transform?.parent?.name == "Chunks_" + height)
-            {
-                UpdateCollider(pair.Value, false);
-            }
-            else
-            {
-                UpdateCollider(pair.Value, true);
             }
         }
 
