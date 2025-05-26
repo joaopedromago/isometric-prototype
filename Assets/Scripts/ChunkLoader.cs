@@ -202,7 +202,6 @@ public class ChunkLoader : MonoBehaviour
         Vector2Int chunkChoord = playerTileDetector.GetChunkCoord(position);
 
         var tilemaps = playerTileDetector.GetTilemapByPosition(chunkChoord.x, chunkChoord.y, chunkHeight);
-
         if (tilemaps == null || tilemaps.Count == 0) return false;
 
         foreach (var tilemap in tilemaps)
@@ -248,22 +247,17 @@ public class ChunkLoader : MonoBehaviour
             TileBase tile = tilemap.GetTile(tilePos);
             if (tile != null)
             {
-
-                Debug.Log($"tilemapName: {tilemap?.name} tileName: {tile?.name} tilePos: {tilePos}");
-
                 if (tilemap.GetComponent<Collider2D>() != null)
                 {
                     if (tile is CustomTile customTile)
                     {
                         if (!customTile.isWindow)
                         {
-                            Debug.Log("HIDE!");
                             return false;
                         }
                     }
                     else
                     {
-                        Debug.Log("HIDE!");
                         return false;
                     }
                 }

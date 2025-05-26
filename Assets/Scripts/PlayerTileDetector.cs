@@ -42,7 +42,7 @@ public class PlayerTileDetector : MonoBehaviour
     public List<Tilemap> GetTilemapByPosition(int x, int y, int height)
     {
         string heightName = $"Chunks_{height}";
-        string chunkName = $"Chunk_{x}_{y}";
+        string chunkName = $"Chunk_{y}_{x}";
 
         foreach (Transform chunkGroup in chunksRoot)
         {
