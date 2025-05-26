@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Tilemaps;
+using UnityEngine.UIElements;
+using System;
 
 public class ChunkLoader : MonoBehaviour
 {
@@ -10,10 +12,28 @@ public class ChunkLoader : MonoBehaviour
     public int viewDistance = 1; // 1 = 3x3 chunks
 
     private Dictionary<Vector3Int, GameObject> loadedChunks = new Dictionary<Vector3Int, GameObject>();
-    private Transform chunksRoot;
+    public Transform chunksRoot;
     private Vector3Int? previousPosition = null;
+    private Vector3? previousPointPosition = null;
     [SerializeField] private Vector2 worldOrigin = new Vector2(-9, -4);
 
+    private PlayerTileDetector playerTileDetector;
+    private PlayerAttributes playerAttributes;
+
+    static readonly Vector3[] neighborOffsets = new Vector3[]
+    {
+        new Vector3( 1,  0, 0),
+        new Vector3(-1,  0, 0),
+        new Vector3( 0,  1, 0),
+        new Vector3( 0, -1, 0),
+    };
+
+
+    void Awake()
+    {
+        playerTileDetector = point?.GetComponent<PlayerTileDetector>();
+        playerAttributes = point?.GetComponent<PlayerAttributes>();
+    }
 
     void Start()
     {
@@ -25,6 +45,7 @@ public class ChunkLoader : MonoBehaviour
     {
         Vector3Int currentChunk = GetChunkCoord(point.position);
         UpdateChunks(currentChunk);
+        UpdateChunksDisplay();
     }
 
     void CacheAllChunks()
@@ -49,7 +70,7 @@ public class ChunkLoader : MonoBehaviour
         return new Vector3Int(x, y, z);
     }
 
-    Vector3Int GetChunkCoord(Vector3 worldPos)
+    public Vector3Int GetChunkCoord(Vector3 worldPos)
     {
         Vector2 adjusted = new Vector2(worldPos.x - worldOrigin.x, worldPos.y - worldOrigin.y);
         int x = Mathf.FloorToInt(adjusted.x / chunkSize);
@@ -106,6 +127,44 @@ public class ChunkLoader : MonoBehaviour
         }
     }
 
+    void UpdateChunksDisplay()
+    {
+        if (playerAttributes.IsMoving) return;
+        var hasChange = previousPointPosition != point.position;
+        if (!hasChange) return;
+        previousPointPosition = point.position;
+
+
+        Vector3Int currentChunk = GetChunkCoord(point.position);
+
+        int? heightToHide = null;
+
+        for (int dx = -viewDistance; dx <= viewDistance; dx++)
+        {
+            for (int dy = -viewDistance; dy <= viewDistance; dy++)
+            {
+                foreach (Transform child in chunksRoot.transform)
+                {
+                    Vector3Int pos = new Vector3Int(currentChunk.y + dy, currentChunk.x + dx, int.Parse(child.name.Split('_')[1]));
+                    if (loadedChunks.TryGetValue(pos, out GameObject chunk))
+                    {
+                        var chunkHeight = int.Parse(child.name.Split('_')[1]);
+
+                        if ((heightToHide != null && chunkHeight >= heightToHide) || ShouldHideChunk(chunkHeight, (int)point.position.z, point.position, true))
+                        {
+                            UpdateDisplay(chunk, false);
+                            heightToHide = chunkHeight;
+                        }
+                        else
+                        {
+                            UpdateDisplay(chunk, true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     void UpdateCollider(GameObject chunk, bool value)
     {
         foreach (Transform child in chunk.transform)
@@ -118,4 +177,111 @@ public class ChunkLoader : MonoBehaviour
             }
         }
     }
+
+    void UpdateDisplay(GameObject chunk, bool value)
+    {
+        foreach (Transform child in chunk.transform)
+        {
+            Tilemap tilemap = child?.GetComponent<Tilemap>();
+            if (tilemap != null)
+            {
+                Color color = tilemap.color;
+                color.a = value ? 1f : 0f;
+                tilemap.color = color;
+            }
+        }
+    }
+
+    bool ShouldHideChunk(int chunkHeight, int surfaceHeight, Vector3 position, bool validateParents = false)
+    {
+        if (chunkHeight <= surfaceHeight)
+        {
+            return false;
+        }
+
+        Vector2Int chunkChoord = playerTileDetector.GetChunkCoord(position);
+
+        var tilemaps = playerTileDetector.GetTilemapByPosition(chunkChoord.x, chunkChoord.y, chunkHeight);
+
+        if (tilemaps == null || tilemaps.Count == 0) return false;
+
+        foreach (var tilemap in tilemaps)
+        {
+            if (!tilemap) continue;
+
+            Vector3Int tilePos = tilemap.WorldToCell(position);
+            TileBase tile = tilemap.GetTile(tilePos);
+
+            if (tile != null)
+            {
+                return true;
+            }
+        }
+
+        return validateParents && ValidateTilesAround(position, chunkHeight, surfaceHeight);
+    }
+
+    bool ValidateTilesAround(Vector3 position, int chunkHeight, int surfaceHeight)
+    {
+        foreach (var offset in neighborOffsets)
+        {
+            if (ValidateParentTile(position + offset, chunkHeight, surfaceHeight))
+                return true;
+        }
+        return false;
+    }
+
+
+    bool ValidateParentTile(Vector3 position, int chunkHeight, int surfaceHeight)
+    {
+        Vector2Int chunkChoord = playerTileDetector.GetChunkCoord(position);
+
+        var tilemaps = playerTileDetector.GetTilemapByPosition(chunkChoord.x, chunkChoord.y, surfaceHeight);
+
+        if (tilemaps == null) return false;
+
+        foreach (var tilemap in tilemaps)
+        {
+            if (!tilemap) continue;
+
+            Vector3Int tilePos = tilemap.WorldToCell(position);
+            TileBase tile = tilemap.GetTile(tilePos);
+            if (tile != null)
+            {
+
+                Debug.Log($"tilemapName: {tilemap?.name} tileName: {tile?.name} tilePos: {tilePos}");
+
+                if (tilemap.GetComponent<Collider2D>() != null)
+                {
+                    if (tile is CustomTile customTile)
+                    {
+                        if (!customTile.isWindow)
+                        {
+                            Debug.Log("HIDE!");
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("HIDE!");
+                        return false;
+                    }
+                }
+
+            }
+        }
+
+        return ShouldHideChunk(chunkHeight, surfaceHeight, position);
+    }
+
+    // list all chunks
+
+    // if chunk height <= player height return false
+
+    // check if chunk has tile in player position
+    // if yes return true
+
+    // get all 8 positions around player tile
+    // if any of this positions is not a wall or is a window
+    // step 1 with new positions without needing to validate all 8 positions again
 }

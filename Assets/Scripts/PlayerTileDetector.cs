@@ -30,7 +30,7 @@ public class PlayerTileDetector : MonoBehaviour
         ProcessTileTrigger();
     }
 
-    Vector2Int GetChunkCoord(Vector3 worldPos)
+    public Vector2Int GetChunkCoord(Vector3 worldPos)
     {
         Vector2 adjusted = new Vector2(worldPos.x - worldOrigin.x, worldPos.y - worldOrigin.y);
         int x = Mathf.FloorToInt(adjusted.x / chunkSize);
@@ -39,17 +39,17 @@ public class PlayerTileDetector : MonoBehaviour
     }
 
 
-    List<Tilemap> GetTilemapByPosition(int x, int y, int height)
+    public List<Tilemap> GetTilemapByPosition(int x, int y, int height)
     {
         string heightName = $"Chunks_{height}";
-        string tilemapName = $"Chunk_{x}_{y}";
+        string chunkName = $"Chunk_{x}_{y}";
 
         foreach (Transform chunkGroup in chunksRoot)
         {
             if (chunkGroup.name != heightName) continue;
             foreach (Transform tilemapTransform in chunkGroup)
             {
-                if (tilemapTransform.name == tilemapName)
+                if (tilemapTransform.name == chunkName)
                 {
                     List<Tilemap> tilemaps = new List<Tilemap>();
 

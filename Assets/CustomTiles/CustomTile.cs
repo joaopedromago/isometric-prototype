@@ -6,4 +6,6 @@ public class CustomTile : Tile
 {
     public bool isStair = true;
     public bool isStairDown = false;
+
+    public bool isWindow = false;
 }
