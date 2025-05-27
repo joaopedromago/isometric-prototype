@@ -19,45 +19,60 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!playerAttributes.IsMoving)
         {
-            float x = Input.GetAxisRaw("Horizontal");
-            float y = Input.GetAxisRaw("Vertical");
+            bool topLeft = Input.GetKey(KeyCode.Q);
+            bool topRight = Input.GetKey(KeyCode.E);
+            bool bottonLeft = Input.GetKey(KeyCode.Z);
+            bool bottonRight = Input.GetKey(KeyCode.C);
 
-            int xDir = x < 0 ? (int)Math.Floor(x) :
-                       x > 0 ? (int)Math.Ceiling(x) : 0;
-
-            int yDir = y < 0 ? (int)Math.Floor(y) :
-                       y > 0 ? (int)Math.Ceiling(y) : 0;
-
-            playerAttributes.MoveDir = new Vector3(xDir, yDir, 0);
-
-            Vector3[] moveAttempts = new Vector3[]
+            if (topLeft)
             {
-                new Vector3(xDir, yDir, 0),
-                new Vector3(0, yDir, 0),
-                new Vector3(xDir, 0, 0)
-            };
-            foreach (Vector3 attempt in moveAttempts)
+                UpdateDesiredPosition(new Vector3(-1, 1, 0));
+            }
+            else if (topRight)
             {
-                if (attempt == Vector3.zero) continue;
+                UpdateDesiredPosition(new Vector3(1, 1, 0));
+            }
+            else if (bottonLeft)
+            {
+                UpdateDesiredPosition(new Vector3(-1, -1, 0));
+            }
+            else if (bottonRight)
+            {
+                UpdateDesiredPosition(new Vector3(1, -1, 0));
+            }
+            else
+            {
+                float x = Input.GetAxisRaw("Horizontal");
+                float y = Input.GetAxisRaw("Vertical");
 
-                Vector3 desiredPos = transform.position + attempt * tileSize;
+                int xDir = x < 0 ? (int)Math.Floor(x) :
+                           x > 0 ? (int)Math.Ceiling(x) : 0;
 
-                Collider2D[] targetColliders = Physics2D.OverlapCircleAll(desiredPos, 0.1f);
-                bool haveCollision = targetColliders.Any(c => c != null && ShouldCollide(c));
-
-                if (!haveCollision && HasTile(desiredPos))
+                int yDir = y < 0 ? (int)Math.Floor(y) :
+                           y > 0 ? (int)Math.Ceiling(y) : 0;
+                if (xDir != 0 || yDir != 0)
                 {
-                    playerAttributes.MoveDir = attempt;
-                    playerAttributes.PreviousPos = transform.position;
-                    playerAttributes.TargetPos = desiredPos;
-                    playerAttributes.IsMoving = true;
-                    playerAttributes.Collider.enabled = false;
-                    break;
+                    playerAttributes.MoveDir = new Vector3(xDir, yDir, 0);
+
+                    Vector3[] moveAttempts = new Vector3[]
+                    {
+                        new Vector3(xDir, yDir, 0),
+                        new Vector3(0, yDir, 0),
+                        new Vector3(xDir, 0, 0)
+                    };
+                    foreach (Vector3 attempt in moveAttempts)
+                    {
+                        if (UpdateDesiredPosition(attempt))
+                        {
+                            break;
+                        }
+                    }
                 }
             }
         }
         if (playerAttributes.IsMoving)
         {
+            UpdateColliderOffset();
             if (playerAttributes.OnCollision)
             {
                 playerAttributes.TargetPos = playerAttributes.PreviousPos;
@@ -68,9 +83,36 @@ public class PlayerMovement : MonoBehaviour
             if (transform.position == playerAttributes.TargetPos)
             {
                 playerAttributes.IsMoving = false;
-                playerAttributes.Collider.enabled = true;
             }
         }
+    }
+
+    bool UpdateDesiredPosition(Vector3 pos)
+    {
+        if (pos == Vector3.zero) return false;
+
+        Vector3 desiredPos = transform.position + pos * tileSize;
+
+        Collider2D[] targetColliders = Physics2D.OverlapCircleAll(desiredPos, 0.2f);
+        bool haveCollision = targetColliders.Any(c => c != null && ShouldCollide(c));
+
+        if (!haveCollision && HasTile(desiredPos))
+        {
+            playerAttributes.MoveDir = pos;
+            playerAttributes.PreviousPos = transform.position;
+            playerAttributes.TargetPos = desiredPos;
+            playerAttributes.IsMoving = true;
+            UpdateColliderOffset();
+            // playerAttributes.Collider.enabled = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    void UpdateColliderOffset()
+    {
+        GetComponent<BoxCollider2D>().offset = new Vector2((playerAttributes.TargetPos.x - transform.position.x) / 2, (playerAttributes.TargetPos.y - transform.position.y) / 2);
     }
 
 
@@ -84,7 +126,7 @@ public class PlayerMovement : MonoBehaviour
         Transform parent = targetCollider?.transform?.parent?.parent;
         if (parent == null)
         {
-            return false;
+            return true;
         }
 
         return IsSameChunk(parent);

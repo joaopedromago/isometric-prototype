@@ -45,7 +45,7 @@ public class ChunkLoader : MonoBehaviour
     {
         Vector3Int currentChunk = GetChunkCoord(point.position);
         UpdateChunks(currentChunk);
-        UpdateChunksDisplay();
+        UpdateChunksDisplay(currentChunk);
     }
 
     void CacheAllChunks()
@@ -127,15 +127,12 @@ public class ChunkLoader : MonoBehaviour
         }
     }
 
-    void UpdateChunksDisplay()
+    void UpdateChunksDisplay(Vector3Int currentChunk)
     {
         if (playerAttributes.IsMoving) return;
         var hasChange = previousPointPosition != point.position;
         if (!hasChange) return;
         previousPointPosition = point.position;
-
-
-        Vector3Int currentChunk = GetChunkCoord(point.position);
 
         int? heightToHide = null;
 
