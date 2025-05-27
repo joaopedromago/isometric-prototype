@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 public class PlayerAttributes : MonoBehaviour
 {
     public Collider2D Collider { get; set; }
-    public float MoveSpeed { get; set; } = 10f;
+    public float MoveSpeed { get; set; } = 4f;
 
     public Vector3 MoveDir { get; set; }
     public Vector3 PreviousPos { get; set; }
