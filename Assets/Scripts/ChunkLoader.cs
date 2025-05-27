@@ -267,15 +267,4 @@ public class ChunkLoader : MonoBehaviour
 
         return ShouldHideChunk(chunkHeight, surfaceHeight, position);
     }
-
-    // list all chunks
-
-    // if chunk height <= player height return false
-
-    // check if chunk has tile in player position
-    // if yes return true
-
-    // get all 8 positions around player tile
-    // if any of this positions is not a wall or is a window
-    // step 1 with new positions without needing to validate all 8 positions again
 }

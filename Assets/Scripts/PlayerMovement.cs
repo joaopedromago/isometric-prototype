@@ -1,14 +1,17 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerMovement : MonoBehaviour
 {
     public float tileSize = 1f;
     private PlayerAttributes playerAttributes;
+    private PlayerTileDetector playerTileDetector;
 
     void Awake()
     {
+        playerTileDetector = GetComponent<PlayerTileDetector>();
         playerAttributes = GetComponent<PlayerAttributes>();
     }
 
@@ -38,10 +41,11 @@ public class PlayerMovement : MonoBehaviour
                 if (attempt == Vector3.zero) continue;
 
                 Vector3 desiredPos = transform.position + attempt * tileSize;
+
                 Collider2D[] targetColliders = Physics2D.OverlapCircleAll(desiredPos, 0.1f);
                 bool haveCollision = targetColliders.Any(c => c != null && ShouldCollide(c));
 
-                if (!haveCollision)
+                if (!haveCollision && HasTile(desiredPos))
                 {
                     playerAttributes.MoveDir = attempt;
                     playerAttributes.PreviousPos = transform.position;
@@ -72,7 +76,6 @@ public class PlayerMovement : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        print("COLLIDED!");
         playerAttributes.OnCollision = true;
     }
 
@@ -103,5 +106,29 @@ public class PlayerMovement : MonoBehaviour
         }
 
         return true;
+    }
+
+    bool HasTile(Vector3 position)
+    {
+        Vector2Int chunkChoord = playerTileDetector.GetChunkCoord(position);
+
+        var tilemaps = playerTileDetector.GetTilemapByPosition(chunkChoord.x, chunkChoord.y, (int)position.z);
+
+        if (tilemaps == null || tilemaps.Count == 0) return false;
+
+        foreach (var tilemap in tilemaps)
+        {
+            if (!tilemap) continue;
+
+            Vector3Int tilePos = tilemap.WorldToCell(position);
+            TileBase tile = tilemap.GetTile(tilePos);
+
+            if (tile != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
