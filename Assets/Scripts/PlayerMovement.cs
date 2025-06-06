@@ -2,21 +2,32 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
     public float tileSize = 1f;
+    public Transform chunkManager;
     private PlayerAttributes playerAttributes;
     private PlayerTileDetector playerTileDetector;
+    private TileGrid tileGrid;
 
     void Awake()
     {
         playerTileDetector = GetComponent<PlayerTileDetector>();
         playerAttributes = GetComponent<PlayerAttributes>();
+        tileGrid = chunkManager.GetComponent<TileGrid>();
     }
 
     void Update()
     {
+
+        if (Input.GetMouseButtonDown(0)) // 0 = Left click
+        {
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+            MoveToPosition(new Vector3(mousePos.x, mousePos.y, transform.position.z));
+        }
         if (!playerAttributes.IsMoving)
         {
             bool topLeft = Input.GetKey(KeyCode.Q);
@@ -42,8 +53,23 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
+                bool usingArrowKeys =
+                    Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
+                    Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow);
+                bool dpadPressed =
+                    Input.GetKey(KeyCode.JoystickButton6) ||
+                    Input.GetKey(KeyCode.JoystickButton7) ||
+                    Input.GetKey(KeyCode.JoystickButton8) ||
+                    Input.GetKey(KeyCode.JoystickButton9);
+
                 float x = Input.GetAxisRaw("Horizontal");
                 float y = Input.GetAxisRaw("Vertical");
+
+                if (Input.GetAxisRaw("DPadHorizontal") != 0 || Input.GetAxisRaw("DPadVertical") != 0)
+                {
+                    x = Input.GetAxisRaw("DPadHorizontal");
+                    y = Input.GetAxisRaw("DPadVertical");
+                }
 
                 int xDir = x < 0 ? (int)Math.Floor(x) :
                            x > 0 ? (int)Math.Ceiling(x) : 0;
@@ -54,9 +80,15 @@ public class PlayerMovement : MonoBehaviour
                 {
                     playerAttributes.MoveDir = new Vector3(xDir, yDir, 0);
 
+                    var positionDirection = new Vector3(xDir, yDir, 0);
+                    if (usingArrowKeys || dpadPressed)
+                    {
+                        UpdateDesiredPosition(positionDirection);
+                        return;
+                    }
                     Vector3[] moveAttempts = new Vector3[]
                     {
-                        new Vector3(xDir, yDir, 0),
+                       positionDirection ,
                         new Vector3(0, yDir, 0),
                         new Vector3(xDir, 0, 0)
                     };
@@ -172,5 +204,17 @@ public class PlayerMovement : MonoBehaviour
         }
 
         return false;
+    }
+
+    void MoveToPosition(Vector3 position)
+    {
+        var precisePosition = new Vector3(
+            (float)Math.Floor(position.x) + 0.5f,
+            (float)Math.Floor(position.y) + 0.5f,
+            position.z
+        );
+        print($"{precisePosition}, {transform.position}");
+        var path = tileGrid.GetWalkPath(transform.position, precisePosition);
+        print($"move to: {string.Join(", ", path)}, size: {path.Count()}");
     }
 }
