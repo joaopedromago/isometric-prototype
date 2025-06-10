@@ -6,11 +6,10 @@ public class PlayerAttributes : MonoBehaviour
 {
     public Collider2D Collider { get; set; }
     public float MoveSpeed { get; set; } = 4f;
-
     public Vector3 MoveDir { get; set; }
     public Vector3 PreviousPos { get; set; }
     public Vector3 TargetPos { get; set; }
-
+    public List<Vector2Int> TargetPosArray { get; set; } = new List<Vector2Int>();
     public bool IsMoving { get; set; } = false;
     public bool OnCollision { get; set; } = false;
 

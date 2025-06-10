@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
+using System.Collections.Generic;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -99,6 +100,12 @@ public class PlayerMovement : MonoBehaviour
                             break;
                         }
                     }
+                }
+                else if (playerAttributes.TargetPosArray.Count() > 0)
+                {
+                    var newTargetPosition = playerAttributes.TargetPosArray[0];
+                    UpdateDesiredPosition(new Vector3(newTargetPosition.x, newTargetPosition.y, transform.position.z));
+                    playerAttributes.TargetPosArray.RemoveAt(0);
                 }
             }
         }
@@ -213,8 +220,7 @@ public class PlayerMovement : MonoBehaviour
             (float)Math.Floor(position.y) + 0.5f,
             position.z
         );
-        print($"{precisePosition}, {transform.position}");
         var path = tileGrid.GetWalkPath(transform.position, precisePosition);
-        print($"move to: {string.Join(", ", path)}, size: {path.Count()}");
+        playerAttributes.TargetPosArray = path.ToList();
     }
 }
